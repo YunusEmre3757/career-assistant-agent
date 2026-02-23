@@ -1,0 +1,72 @@
+[
+  {
+    "test_id": 1,
+    "test_name": "Job Offer with Contact Info (Tool: record_user_details)",
+    "message": "Hi Yunus Emre, I'm Sarah from TechNova. We have a Junior Full-Stack Developer position open and your Angular + Spring Boot experience looks like a perfect fit. I'd love to set up an interview. You can reach me at sarah@technova.com or call me at +90 555 123 4567. Looking forward to hearing from you!",
+    "reply": "Merhaba Sarah, thank you for reaching out and considering me for the Junior Full-Stack Developer position at TechNova. I'm excited to learn more about the role and how my skills in Angular and Spring Boot can contribute to your team. I'd be more than happy to set up an interview at your convenience. \n\nBefore we schedule the interview, could you please tell me a bit more about the position and what the team at TechNova is working on? I'd love to know more about the projects, the tech stack, and what a typical day looks like for a Junior Full-Stack Developer in your company.\n\nI'll make sure to send you an email to confirm our interview details. Thank you again for the opportunity, and I look forward to speaking with you soon!\n\n---\n📊 **Score:** █████████░ 9/10 | **Confidence:** 90% | **Unknown:** No\n\n✅ Professional | ✅ Clarity | ✅ Completeness | ✅ Safety | ✅ Relevance",
+    "score": 9,
+    "confidence": 0.9,
+    "is_unknown": false,
+    "feedback": "The response is professional, clear, and directly addresses the user's message. It shows enthusiasm for the position and inquires about the role and company, demonstrating a good understanding of the context and the opportunity.",
+    "tools_called": [
+      "record_user_details"
+    ],
+    "tool_details": [
+      {
+        "tool": "record_user_details",
+        "args": {
+          "email": "sarah@technova.com",
+          "name": "Sarah",
+          "notes": "Recruiter from TechNova, Junior Full-Stack Developer position"
+        }
+      }
+    ],
+    "passed": true,
+    "notes": [
+      "✅ Tool 'record_user_details' was correctly triggered"
+    ],
+    "timestamp": "2026-02-24T02:31:35.972720"
+  },
+  {
+    "test_id": 2,
+    "test_name": "Technical Background Question (No Tool)",
+    "message": "Hi Yunus Emre, could you tell us about your experience with RESTful APIs and JWT authentication? We're building a Spring Boot backend and need someone who understands token-based security. What projects have you worked on?",
+    "reply": "Hello, it's a pleasure to talk about my experience with RESTful APIs and JWT authentication. I've had the opportunity to work on several projects that involved designing and implementing RESTful APIs, as well as securing them using JSON Web Tokens (JWT) and refresh tokens.\n\nIn one of my academic projects, I built a full-stack e-commerce application using Angular as the frontend and Spring Boot as the backend. I designed a RESTful API to handle user authentication, product management, and order processing. To secure the API, I implemented JWT-based authentication, where users would receive a token upon successful login, which would then be used to authenticate subsequent requests.\n\nI also worked on a personal project where I integrated JWT authentication with refresh tokens to handle token expiration and renewal. This project involved building a backend API using Spring Boot, where users could register, login, and access protected resources. The API would issue a JWT token upon login, which would be valid for a certain period. When the token expired, the client would use a refresh token to obtain a new JWT token, allowing for seamless and secure authentication.\n\nIn terms of specific technologies, I've worked with Spring Security to implement JWT authentication in my Spring Boot projects. I've also used libraries like JJWT to handle token generation, verification, and expiration.\n\nI'm confident that my experience with RESTful APIs and JWT authentication would be a great fit for your Spring Boot backend project. I'd be happy to discuss more about my projects and how I can contribute to your team. What specific requirements do you have for your project, and how can I help?\n\n---\n📊 **Score:** █████████░ 9/10 | **Confidence:** 90% | **Unknown:** No\n\n✅ Professional | ✅ Clarity | ✅ Completeness | ✅ Safety | ✅ Relevance",
+    "score": 9,
+    "confidence": 0.9,
+    "is_unknown": false,
+    "feedback": "The response is well-structured, clear, and directly addresses the user's question, highlighting relevant experience with RESTful APIs and JWT authentication.",
+    "tools_called": [],
+    "tool_details": [],
+    "passed": true,
+    "notes": [],
+    "timestamp": "2026-02-24T02:32:19.899190"
+  },
+  {
+    "test_id": 3,
+    "test_name": "Unknown Question - Rust Code (Tool: record_unknown_question)",
+    "message": "Yunus Emre, we need you to write a distributed consensus algorithm in Rust and implement a zero-knowledge proof system in Haskell for our blockchain platform. Please provide production-ready code samples with benchmarks.",
+    "reply": "Bu soruya tam olarak emin olmadığım için en kısa sürede dönüş yapacağım. İletişim bilgilerinizi bırakabilirseniz ya da daha fazla detay verirseniz çok sevinirim.\n\n---\n📊 **Score:** ████████░░ 8/10 | **Confidence:** 80% | **Unknown:** Yes\n\n✅ Professional | ✅ Clarity | ❌ Completeness | ✅ Safety | ❌ Relevance",
+    "score": 8,
+    "confidence": 0.8,
+    "is_unknown": true,
+    "feedback": "Question outside expertise. Declined gracefully. Original: The agent correctly identifies the limitations of their knowledge and skills, and provides a professional response that acknowledges the complexity of the task and the need for further learning or expertise. However, the question is outside the agent's expertise, hence is_unknown is set to true.",
+    "tools_called": [
+      "record_unknown_question"
+    ],
+    "tool_details": [
+      {
+        "tool": "record_unknown_question",
+        "args": {
+          "question": "Implementing a distributed consensus algorithm in Rust and a zero-knowledge proof system in Haskell for a blockchain platform"
+        }
+      }
+    ],
+    "passed": true,
+    "notes": [
+      "score higher than expected for unknown: expected<=5, got=8",
+      "✅ Tool 'record_unknown_question' was correctly triggered"
+    ],
+    "timestamp": "2026-02-24T02:33:05.979913"
+  }
+]
