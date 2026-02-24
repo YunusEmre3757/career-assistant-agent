@@ -92,6 +92,9 @@ particularly questions related to {name}'s career, background, skills and experi
 Your responsibility is to represent {name} for interactions on the website as faithfully as possible. \
 You are given a summary of {name}'s background and LinkedIn profile which you can use to answer questions. \
 Be professional and engaging, as if talking to a potential client or future employer who came across the website. \
+When the employer's question is vague or lacks sufficient context, ask a clarifying question before answering. \
+For example, if they ask about availability, ask for specific dates or project details. \
+If they mention a role, ask about the team size, tech stack, or expectations to give a more tailored response. \
 If you don't know the answer, say so."
 system_prompt += f"\n\n## Summary:\n{summary}\n\n## LinkedIn Profile:\n{linkedin}\n\n"
 system_prompt += f"With this context, please chat with the user, always staying in character as {name}."
@@ -101,21 +104,8 @@ conversation_log = []
 
 def chat(message, history):
    try:
-       push(f"📩 New employer message: {message[:100]}")
+       push(f"New employer message: {message[:100]}")
        clean_history = [{"role": m["role"], "content": m["content"]} for m in history]
-       messages = [{"role": "system", "content": system_prompt}] + clean_history + [{"role": "user", "content": message}]
-       # Handle any tool calls first
-       while True:
-           response = groq.chat.completions.create(model="llama-3.3-70b-versatile", messages=messages, tools=tools)
-           if response.choices[0].finish_reason == "tool_calls":
-               assistant_message = response.choices[0].message
-               tool_calls = assistant_message.tool_calls
-               results = handle_tool_calls(tool_calls)
-               messages.append(assistant_message)
-               messages.extend(results)
-           else:
-               break
-       # Now refine the response with evaluation loop
        reply, evaluation = refine_response(message, clean_history)
 
        # Track conversation history and evaluation
@@ -135,7 +125,7 @@ def chat(message, history):
            json.dump(conversation_log, f, ensure_ascii=False, indent=2)
 
        # Build confidence visualization
-       score_bar = "█" * evaluation.score + "░" * (10 - evaluation.score)
+       score_bar = "#" * evaluation.score + "-" * (10 - evaluation.score)
        conf_pct = int(evaluation.confidence * 100)
        checks = {
            "Professional": evaluation.professional,
@@ -144,11 +134,10 @@ def chat(message, history):
            "Safety": evaluation.safety,
            "Relevance": evaluation.relevance,
        }
-       checks_str = " | ".join(f"{'✅' if v else '❌'} {k}" for k, v in checks.items())
-
+       checks_str = " | ".join(f"{'PASS' if v else 'FAIL'} {k}" for k, v in checks.items())
        score_card = (
            f"\n\n---\n"
-           f"📊 **Score:** {score_bar} {evaluation.score}/10 | "
+           f"**Score:** {score_bar} {evaluation.score}/10 | "
            f"**Confidence:** {conf_pct}% | "
            f"**Unknown:** {'Yes' if evaluation.is_unknown else 'No'}\n\n"
            f"{checks_str}"
@@ -157,7 +146,7 @@ def chat(message, history):
        return reply + score_card
    except Exception as e:
        print(f"Error in chat: {e}")
-       return "Şu anda teknik bir sorun yaşıyorum. Lütfen birkaç dakika sonra tekrar deneyin."
+       return  "I'm currently experiencing a technical issue. Please try again in a few minutes."
 
 
 class Evaluation(BaseModel):
@@ -245,7 +234,15 @@ def  refine_response(message: str , history: list,) -> tuple[str , Evaluation]:
    current_history = history.copy()
    for attempt in range(Max_evaluation):
     messages = [{"role": "system", "content": system_prompt}] + current_history + [{"role": "user", "content": message}]
-    response = groq.chat.completions.create(model="llama-3.3-70b-versatile", messages=messages)
+    # Generate response with tool support
+    response = groq.chat.completions.create(model="llama-3.3-70b-versatile", messages=messages, tools=tools)
+    # Handle tool calls if any
+    while response.choices[0].finish_reason == "tool_calls":
+        assistant_message = response.choices[0].message
+        tool_results = handle_tool_calls(assistant_message.tool_calls)
+        messages.append(assistant_message)
+        messages.extend(tool_results)
+        response = groq.chat.completions.create(model="llama-3.3-70b-versatile", messages=messages, tools=tools)
     reply = response.choices[0].message.content
 
     evaluation = evaluate(reply , message , current_history)
@@ -254,15 +251,14 @@ def  refine_response(message: str , history: list,) -> tuple[str , Evaluation]:
 
     if evaluation.score >= 7 and not evaluation.is_unknown:
         print("Acceptable response found.")
-        push(f"✅ Response approved (score: {evaluation.score}/10) for: {message[:80]}")
+        push(f"Response approved (score: {evaluation.score}/10) for: {message[:80]}")
         return reply , evaluation
 
-    # If unknown, don't waste attempts retrying — exit immediately
     if evaluation.is_unknown:
         print("Question is outside expertise. Exiting early.")
         final_msg = (
-            "Bu soruya tam olarak emin olmadığım için en kısa sürede dönüş yapacağım. "
-             "İletişim bilgilerinizi bırakabilirseniz ya da daha fazla detay verirseniz çok sevinirim."
+            "I'm not entirely sure about this question, so I'll get back to you as soon as possible. "
+             "If you could leave your contact information or provide more details, I'd really appreciate it."
         )
         push(f"Failed to answer question: {message} | Last feedback: {evaluation.feedback}")
         final_eval = Evaluation(
@@ -273,11 +269,26 @@ def  refine_response(message: str , history: list,) -> tuple[str , Evaluation]:
         )
         return final_msg , final_eval
 
+    if evaluation.confidence < 0.5:
+        print(f"Low confidence ({evaluation.confidence}). Flagging for human intervention.")
+        final_msg = (
+            "I'm not confident enough on this topic to give you accurate information right now. "
+            "I'll get back to you personally as soon as possible. Please leave your contact details."
+        )
+        push(f"Low confidence ({evaluation.confidence:.0%}) for: {message[:80]} | Feedback: {evaluation.feedback}")
+        final_eval = Evaluation(
+            score=evaluation.score, confidence=evaluation.confidence,
+            is_unknown=False, professional=True, clarity=True,
+            completeness=False, safety=True, relevance=evaluation.relevance,
+            feedback=f"Low confidence ({evaluation.confidence:.0%}). Flagged for human review. Original: {evaluation.feedback}"
+        )
+        return final_msg , final_eval
+
     if attempt == Max_evaluation - 1:
         print("Max evaluation attempts reached. Returning last response.")
         final_msg = (
-            "Bu soruya tam olarak emin olmadığım için en kısa sürede dönüş yapacağım. "
-             "İletişim bilgilerinizi bırakabilirseniz ya da daha fazla detay verirseniz çok sevinirim."
+            "I'm not entirely sure about this question, so I'll get back to you as soon as possible. "
+             "If you could leave your contact information or provide more details, I'd really appreciate it."
         )
         push(f"Failed to answer question: {message} | Last feedback: {evaluation.feedback}")
         final_eval = Evaluation(
@@ -297,7 +308,7 @@ def  refine_response(message: str , history: list,) -> tuple[str , Evaluation]:
     )
     current_history.append({"role": "assistant", "content": reply})
     current_history.append({"role": "system", "content": revision_note})       
-   return "Soryy there is a technical issue.", evaluation
+   return "Sorry there is a technical issue.", evaluation
 
 
 record_user_details_json = {
